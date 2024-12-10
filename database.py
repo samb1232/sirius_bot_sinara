@@ -20,4 +20,4 @@ def add_user(num_id, role_name, num_data):
     insert_query = insert(users).values(id=num_id, role=role_name, creation_date=num_data)
     with db.connect() as connection:
         connection.execute(insert_query)
-print("Для ветки")
+
