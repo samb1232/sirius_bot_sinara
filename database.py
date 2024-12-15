@@ -1,5 +1,5 @@
 from sqlalchemy import create_engine
-from sqlalchemy import Table, Column, Integer, String, MetaData
+from sqlalchemy import Table, Column, Integer, String, MetaData, BLOB
 from sqlalchemy import insert
 num_id = 0
 role_name = ""
@@ -10,7 +10,11 @@ md = MetaData()
 users = Table(
     'users', md,
     Column('id', Integer, primary_key=True),
+    Column('name', String),
     Column('role', String),
+    Column("birthday", Integer),
+    Column("infa", String),
+    Column("photo", BLOB),
     Column('creation_date', Integer)
 )
 
