@@ -5,8 +5,9 @@ import logging
 import sqlalchemy as db
 from sqlalchemy.orm import sessionmaker
 
-from database.db_base import db_base
-from database.tables.test_db import User
+
+from db.tables.database import User
+from db.db_base import db_base
 
 logger = logging.getLogger(__name__)
 
