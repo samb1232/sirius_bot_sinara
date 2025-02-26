@@ -161,3 +161,9 @@ cython_debug/
 #  option (not recommended) you can uncomment the following to ignore the entire idea folder.
 #.idea/
 bot_structure/
+
+#Node modules
+node_modules/
+.DS_STORE.DS_Store
+.DS_Store
+
