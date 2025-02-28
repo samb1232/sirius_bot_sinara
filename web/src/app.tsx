@@ -6,6 +6,7 @@ export default function App() {
         <div>
         <ButtonAppBar />
         </div>
+        <div style={{padding: "4px"}}></div>
         <div style={{ flex: 1, display: "flex",height: "100%" }}>
         <Graph></Graph>
       </div>

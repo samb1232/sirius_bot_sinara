@@ -10,16 +10,9 @@ import {
   Handle,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import START_NODE from '../utils/startnode'
 
-const START_NODE = {
-  id: "0",
-  type: "input",
-  data: { label: "/start" },
-  position: { x: 0, y: 0 },
-  selectable: false,
-  draggable: false,
-  style: { width: 150, height: 50 },
-};
+
 
 const getSavedNodes = () => {
   const savedNodes = localStorage.getItem("nodes");
@@ -38,21 +31,12 @@ const getId = () => {
   return `${id}`;
 };
 
-type TextNode = {
-  id: string;
-  text: string;
-};
-
-const saveTextNode = ({ id, text }: TextNode): void => {
-  localStorage.setItem("node"+id+"Text", text);
-};
-
 const nodeOrigin = [0.5, 0];
 
 const CustomNode = ({ id, data }) => {
   const savedText = localStorage.getItem("node" + id + "Text") || data.label;
   const [label, setLabel] = useState(savedText);
-
+  console.log(id)
   useEffect(() => {
     localStorage.setItem("node" + id + "Text", label);
   }, [label, id]);
