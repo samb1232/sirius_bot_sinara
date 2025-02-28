@@ -10,16 +10,9 @@ import {
   Handle,
 } from "@xyflow/react";
 import "@xyflow/react/dist/style.css";
+import START_NODE from '../utils/startnode'
 
-const START_NODE = {
-  id: "0",
-  type: "input",
-  data: { label: "/start" },
-  position: { x: 0, y: 0 },
-  selectable: false,
-  draggable: false,
-  style: { width: 150, height: 50 },
-};
+
 
 const getSavedNodes = () => {
   const savedNodes = localStorage.getItem("nodes");
