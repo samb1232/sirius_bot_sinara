@@ -10,12 +10,15 @@ const importGraph = (event) => {
         const edges = [];
         
         const traverse = (node, parentId = null) => {
+          
           nodes.push({
             id: node.id,
-            type: "custom",
+            type: node.id == 0 ? "input": "custom",
             position: node.position || { x: 0, y: 0 },
             data: { label: node.data.label },
             style: { width: 150, height: 50 },
+            selectable: node.id == 0 ? false:true,
+            draggable: node.id == 0 ? false:true,
           });
           
           if (parentId) {

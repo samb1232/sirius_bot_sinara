@@ -31,21 +31,12 @@ const getId = () => {
   return `${id}`;
 };
 
-type TextNode = {
-  id: string;
-  text: string;
-};
-
-const saveTextNode = ({ id, text }: TextNode): void => {
-  localStorage.setItem("node"+id+"Text", text);
-};
-
 const nodeOrigin = [0.5, 0];
 
 const CustomNode = ({ id, data }) => {
   const savedText = localStorage.getItem("node" + id + "Text") || data.label;
   const [label, setLabel] = useState(savedText);
-
+  console.log(id)
   useEffect(() => {
     localStorage.setItem("node" + id + "Text", label);
   }, [label, id]);
