@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useRef } from 'react';
+import React, { useState, useCallback, useRef, useEffect } from 'react';
 import {
   Background,
   ReactFlow,
@@ -8,6 +8,9 @@ import {
   addEdge,
   useReactFlow,
   Panel,
+  Connection,
+  ReactFlowInstance,
+  XYPosition,
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
@@ -18,21 +21,58 @@ const nodeOrigin = [0.5, 0];
 
 const initialNodes = [
   { id: '1', data: { label: '/start' }, type: 'input', position: { x: 0, y: -50 }, draggable: false, selectable: false },
-  { id: '2', data: { label: 'Node 2' }, type: 'default', position: { x: 0, y: 50 } },
+  { id: '2', data: { label: 'Вопрос 1' }, type: 'default', position: { x: 0, y: 50 } },
   
 ];
 
 const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
 
+type CustomNode = {
+  id: string;
+  type: string;
+  position: { x: number; y: number };
+  data: { label: string };
+  origin?: [number, number];
+  draggable?: boolean;
+  selectable?: boolean;
+};
+
+type CustomEdge = {
+  id: string;
+  source: string;
+  target: string;
+};
+
 const GraphEditor = () => {
-  const reactFlowWrapper = useRef(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState(initialEdges);
-  const [rfInstance, setRfInstance] = useState(null);
+  const reactFlowWrapper = useRef<HTMLDivElement>(null);
+  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdge>(initialEdges);
+  const [rfInstance, setRfInstance] = useState<ReactFlowInstance<CustomNode, CustomEdge> | null>(null);
   const { setViewport, screenToFlowPosition } = useReactFlow();
 
+  useEffect(() => {
+    const restoreFlow = async () => {
+      const flowString = localStorage.getItem(flowKey);
+      if (flowString) {
+        const flow = JSON.parse(flowString);
+        const { x = 0, y = 0, zoom = 1 } = flow.viewport;
+        setNodes(flow.nodes || []);
+        setEdges(flow.edges || []);
+        setViewport({ x, y, zoom });
+      }
+    };
+    restoreFlow();
+  }, [setNodes, setEdges, setViewport]);
+
+  useEffect(() => {
+    if (rfInstance) {
+      const flow = rfInstance.toObject();
+      localStorage.setItem(flowKey, JSON.stringify(flow));
+    }
+  }, [nodes, edges, rfInstance]);
+
   const onConnect = useCallback(
-    (params) => setEdges((eds) => addEdge(params, eds)),
+    (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
 
@@ -45,8 +85,9 @@ const GraphEditor = () => {
 
   const onRestore = useCallback(() => {
     const restoreFlow = async () => {
-      const flow = JSON.parse(localStorage.getItem(flowKey));
-      if (flow) {
+      const flowString = localStorage.getItem(flowKey);
+      if (flowString) {
+        const flow = JSON.parse(flowString);
         const { x = 0, y = 0, zoom = 1 } = flow.viewport;
         setNodes(flow.nodes || []);
         setEdges(flow.edges || []);
@@ -56,31 +97,21 @@ const GraphEditor = () => {
     restoreFlow();
   }, [setNodes, setEdges, setViewport]);
 
-  const onAdd = useCallback(() => {
-    const newNode = {
-      id: getNodeId(),
-      data: { label: 'Added node' },
-      position: {
-        x: (Math.random() - 0.5) * 400,
-        y: (Math.random() - 0.5) * 400,
-      },
-    };
-    setNodes((nds) => nds.concat(newNode));
-  }, [setNodes]);
-
   const onConnectEnd = useCallback(
-    (event, connectionState) => {
+    (event: MouseEvent | TouchEvent, connectionState: any) => {
       if (!connectionState.isValid) {
         const id = getNodeId();
         const { clientX, clientY } = 'changedTouches' in event ? event.changedTouches[0] : event;
-        const newNode = {
+        const newNode: CustomNode = {
           id,
+          type: 'default',
           position: screenToFlowPosition({ x: clientX, y: clientY }),
-          data: { label: `Node ${id}` },
-          origin: nodeOrigin,
+          data: { label: `gngngn` },
+          origin: nodeOrigin as [number, number],
         };
-        setNodes((nds) => nds.concat(newNode));
-        setEdges((eds) => eds.concat({ id, source: connectionState.fromNode.id, target: id }));
+        setNodes((nds) => [...nds, newNode]);
+        setEdges((eds) => [...eds, { id, source: connectionState.fromNode.id, target: id }]);
+        onSave();
       }
     },
     [screenToFlowPosition, setNodes, setEdges]
@@ -88,7 +119,7 @@ const GraphEditor = () => {
 
   return (
     <div className="wrapper" ref={reactFlowWrapper}>
-      <ReactFlow
+      <ReactFlow<CustomNode, CustomEdge>
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -99,14 +130,13 @@ const GraphEditor = () => {
         fitView
         fitViewOptions={{ padding: 2 }}
         style={{ backgroundColor: "#F7F9FB" }}
-        nodeOrigin={nodeOrigin}
+        nodeOrigin={nodeOrigin as [number, number]}
       >
         <Background />
-        <Panel position="top-right">
+        {/* <Panel position="top-right">
           <button onClick={onSave}>Save</button>
           <button onClick={onRestore}>Restore</button>
-          <button onClick={onAdd}>Add Node</button>
-        </Panel>
+        </Panel> */}
       </ReactFlow>
     </div>
   );
