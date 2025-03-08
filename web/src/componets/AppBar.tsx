@@ -6,8 +6,7 @@ import IconButton from "@mui/material/IconButton";
 import Typography from "@mui/material/Typography";
 import UploadIcon from "@mui/icons-material/Upload";
 import DownloadIcon from "@mui/icons-material/Download";
-import exportGraph from "../utils/exportGraph";
-import importGraph from "../utils/importGraph";
+
 import theme from "../theme";
 import { ThemeProvider } from "@emotion/react";
 
@@ -30,13 +29,13 @@ export default function ButtonAppBar() {
             </Typography>
             <Box sx={{ flexGrow: 1 }} />
             <Box sx={{ display: { xs: "none", md: "flex" } }}>
-              <IconButton size="large" color="inherit" onClick={exportGraph}>
+              <IconButton size="large" color="inherit" >
                 <DownloadIcon />
               </IconButton>
               <IconButton size="large" color="inherit" onClick={handleUploadClick}>
                 <UploadIcon />
               </IconButton>
-              <input type="file" accept=".json" ref={fileInputRef} onChange={importGraph} style={{ display: "none" }} />
+              <input type="file" accept=".json" ref={fileInputRef}  style={{ display: "none" }} />
             </Box>
           </Toolbar>
         </AppBar>
