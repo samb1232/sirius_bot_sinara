@@ -18,8 +18,16 @@ import {
 import '@xyflow/react/dist/style.css';
 
 const flowKey = 'example-flow';
-const getNodeId = () => `randomnode_${+new Date()}`;
 const nodeOrigin = [0.5, 0];
+
+const startNode: FlowNode = { 
+  id: '1', 
+  data: { label: '/start' }, 
+  type: 'input', 
+  position: { x: 0, y: -50 }, 
+  draggable: false, 
+  selectable: false 
+};
 
 type NodeData = {
   label: string;
@@ -29,14 +37,7 @@ type FlowNode = Node<NodeData>;
 type FlowEdge = Edge;
 
 const initialNodes: FlowNode[] = [
-  { 
-    id: '1', 
-    data: { label: '/start' }, 
-    type: 'input', 
-    position: { x: 0, y: -50 }, 
-    draggable: false, 
-    selectable: false 
-  },
+  startNode,
   { 
     id: '2', 
     data: { label: 'Вопрос 1' }, 
@@ -54,13 +55,20 @@ const GraphEditor = () => {
   const [rfInstance, setRfInstance] = useState<ReactFlowInstance<FlowNode, FlowEdge> | null>(null);
   const { setViewport, screenToFlowPosition } = useReactFlow();
 
+  const getNodeId = useCallback(() => {
+    const maxId = Math.max(...nodes.map(node => parseInt(node.id)));
+    return String(maxId + 1);
+  }, [nodes]);
+
   useEffect(() => {
     const restoreFlow = async () => {
       const flowString = localStorage.getItem(flowKey);
       if (flowString) {
         const flow = JSON.parse(flowString);
         const { x = 0, y = 0, zoom = 1 } = flow.viewport;
-        setNodes(flow.nodes || []);
+        // Восстанавливаем ноды, добавляя стартовую ноду в начало
+        const savedNodes = flow.nodes || [];
+        setNodes([startNode, ...savedNodes]);
         setEdges(flow.edges || []);
         setViewport({ x, y, zoom });
       }
@@ -71,6 +79,8 @@ const GraphEditor = () => {
   useEffect(() => {
     if (rfInstance) {
       const flow = rfInstance.toObject();
+      // Сохраняем все ноды кроме стартовой
+      flow.nodes = nodes.filter(node => node.id !== '1');
       localStorage.setItem(flowKey, JSON.stringify(flow));
     }
   }, [nodes, edges, rfInstance]);
@@ -79,27 +89,6 @@ const GraphEditor = () => {
     (params: Connection) => setEdges((eds) => addEdge(params, eds)),
     [setEdges]
   );
-
-  const onSave = useCallback(() => {
-    if (rfInstance) {
-      const flow = rfInstance.toObject();
-      localStorage.setItem(flowKey, JSON.stringify(flow));
-    }
-  }, [rfInstance]);
-
-  const onRestore = useCallback(() => {
-    const restoreFlow = async () => {
-      const flowString = localStorage.getItem(flowKey);
-      if (flowString) {
-        const flow = JSON.parse(flowString);
-        const { x = 0, y = 0, zoom = 1 } = flow.viewport;
-        setNodes(flow.nodes || []);
-        setEdges(flow.edges || []);
-        setViewport({ x, y, zoom });
-      }
-    };
-    restoreFlow();
-  }, [setNodes, setEdges, setViewport]);
 
   const onConnectEnd = useCallback(
     (event: MouseEvent | TouchEvent, connectionState: any) => {
@@ -113,11 +102,10 @@ const GraphEditor = () => {
           data: { label: 'Новый вопрос' },
         };
         setNodes((nds) => [...nds, newNode]);
-        setEdges((eds) => [...eds, { id, source: connectionState.fromNode.id, target: id }]);
-        onSave();
+        setEdges((eds) => [...eds, { id: `e${connectionState.fromNode.id}-${id}`, source: connectionState.fromNode.id, target: id }]);
       }
     },
-    [screenToFlowPosition, setNodes, setEdges]
+    [screenToFlowPosition, setNodes, setEdges, getNodeId]
   );
 
   const onNodeDoubleClick = useCallback((event: React.MouseEvent, node: FlowNode) => {
