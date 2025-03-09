@@ -11,6 +11,8 @@ import {
   Connection,
   ReactFlowInstance,
   XYPosition,
+  Node,
+  Edge,
 } from '@xyflow/react';
 
 import '@xyflow/react/dist/style.css';
@@ -19,35 +21,37 @@ const flowKey = 'example-flow';
 const getNodeId = () => `randomnode_${+new Date()}`;
 const nodeOrigin = [0.5, 0];
 
-const initialNodes = [
-  { id: '1', data: { label: '/start' }, type: 'input', position: { x: 0, y: -50 }, draggable: false, selectable: false },
-  { id: '2', data: { label: 'Вопрос 1' }, type: 'default', position: { x: 0, y: 50 } },
-  
+type NodeData = {
+  label: string;
+};
+
+type FlowNode = Node<NodeData>;
+type FlowEdge = Edge;
+
+const initialNodes: FlowNode[] = [
+  { 
+    id: '1', 
+    data: { label: '/start' }, 
+    type: 'input', 
+    position: { x: 0, y: -50 }, 
+    draggable: false, 
+    selectable: false 
+  },
+  { 
+    id: '2', 
+    data: { label: 'Вопрос 1' }, 
+    type: 'default', 
+    position: { x: 0, y: 50 } 
+  },
 ];
 
-const initialEdges = [{ id: 'e1-2', source: '1', target: '2' }];
-
-type CustomNode = {
-  id: string;
-  type: string;
-  position: { x: number; y: number };
-  data: { label: string };
-  origin?: [number, number];
-  draggable?: boolean;
-  selectable?: boolean;
-};
-
-type CustomEdge = {
-  id: string;
-  source: string;
-  target: string;
-};
+const initialEdges: FlowEdge[] = [{ id: 'e1-2', source: '1', target: '2' }];
 
 const GraphEditor = () => {
   const reactFlowWrapper = useRef<HTMLDivElement>(null);
-  const [nodes, setNodes, onNodesChange] = useNodesState<CustomNode>(initialNodes);
-  const [edges, setEdges, onEdgesChange] = useEdgesState<CustomEdge>(initialEdges);
-  const [rfInstance, setRfInstance] = useState<ReactFlowInstance<CustomNode, CustomEdge> | null>(null);
+  const [nodes, setNodes, onNodesChange] = useNodesState<FlowNode>(initialNodes);
+  const [edges, setEdges, onEdgesChange] = useEdgesState<FlowEdge>(initialEdges);
+  const [rfInstance, setRfInstance] = useState<ReactFlowInstance<FlowNode, FlowEdge> | null>(null);
   const { setViewport, screenToFlowPosition } = useReactFlow();
 
   useEffect(() => {
@@ -102,12 +106,11 @@ const GraphEditor = () => {
       if (!connectionState.isValid) {
         const id = getNodeId();
         const { clientX, clientY } = 'changedTouches' in event ? event.changedTouches[0] : event;
-        const newNode: CustomNode = {
+        const newNode: FlowNode = {
           id,
           type: 'default',
           position: screenToFlowPosition({ x: clientX, y: clientY }),
-          data: { label: `gngngn` },
-          origin: nodeOrigin as [number, number],
+          data: { label: 'Новый вопрос' },
         };
         setNodes((nds) => [...nds, newNode]);
         setEdges((eds) => [...eds, { id, source: connectionState.fromNode.id, target: id }]);
@@ -117,9 +120,29 @@ const GraphEditor = () => {
     [screenToFlowPosition, setNodes, setEdges]
   );
 
+  const onNodeDoubleClick = useCallback((event: React.MouseEvent, node: FlowNode) => {
+    // Prevent editing start node
+    if (node.id === '1') return;
+
+    const newLabel = prompt('Введите новый текст:', node.data.label);
+    if (newLabel !== null) {
+      setNodes((nds) =>
+        nds.map((n) => {
+          if (n.id === node.id) {
+            return {
+              ...n,
+              data: { ...n.data, label: newLabel },
+            };
+          }
+          return n;
+        })
+      );
+    }
+  }, [setNodes]);
+
   return (
     <div className="wrapper" ref={reactFlowWrapper}>
-      <ReactFlow<CustomNode, CustomEdge>
+      <ReactFlow<FlowNode, FlowEdge>
         nodes={nodes}
         edges={edges}
         onNodesChange={onNodesChange}
@@ -127,16 +150,13 @@ const GraphEditor = () => {
         onConnect={onConnect}
         onConnectEnd={onConnectEnd}
         onInit={setRfInstance}
+        onNodeDoubleClick={onNodeDoubleClick}
         fitView
         fitViewOptions={{ padding: 2 }}
         style={{ backgroundColor: "#F7F9FB" }}
         nodeOrigin={nodeOrigin as [number, number]}
       >
         <Background />
-        {/* <Panel position="top-right">
-          <button onClick={onSave}>Save</button>
-          <button onClick={onRestore}>Restore</button>
-        </Panel> */}
       </ReactFlow>
     </div>
   );
